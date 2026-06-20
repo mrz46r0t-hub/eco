@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhytoPredict KZ — Панель Мониторинга</title>
+    <style>
+        :root {
+            --primary-green: #4CAF50;
+            --light-green: #E8F5E9;
+            --accent-green: #A5D6A7;
+            --beige-earth: #F5E6C8;
+            --white: #FFFFFF;
+            --dark-green: #2E7D32;
+            --gray-bg: #F4F6F4;
+            --gray-text: #2C3E50;
+            --gray-muted: #7F8C8D;
+            --status-healthy: #2E7D32;
+            --status-stress: #F39C12;
+            --status-danger: #C0392B;
+            --border-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--gray-bg);
+            color: var(--gray-text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--white);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-area {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-area .brand {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--dark-green);
+            letter-spacing: -0.5px;
+        }
+
+        .logo-area .slogan {
+            font-size: 11px;
+            color: var(--gray-muted);
+            margin-top: 3px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .nav-links a {
+            color: var(--gray-text);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            background-color: var(--light-green);
+            color: var(--dark-green);
+        }
+
+        .nav-links a.active {
+            background-color: var(--dark-green);
+            color: var(--white);
+        }
+
+        main {
+            flex: 1;
+            padding: 32px 40px;
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .panel {
+            background: var(--white);
+            border-radius: var(--border-radius);
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(46, 125, 50, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark-green);
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #selected-title {
+            background-color: var(--light-green);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--dark-green);
+            font-weight: 700;
+        }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            flex: 1;
+        }
+
+        .map-sector {
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+            border: 2px solid transparent;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-sector::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+        }
+
+        .map-sector.healthy::before { background-color: var(--status-healthy); }
+        .map-sector.stress::before { background-color: var(--status-stress); }
+        .map-sector.danger::before { background-color: var(--status-danger); }
+
+        .map-sector:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .map-sector.active {
+            border-color: var(--dark-green);
+            background-color: var(--white);
+            box-shadow: 0 4px 16px rgba(46, 125, 50, 0.06);
+        }
+
+        .sector-id { 
+            font-weight: 700; 
+            font-size: 18px; 
+            color: var(--gray-text);
+        }
+        
+        .sector-status { 
+            font-size: 12px; 
+            font-weight: 700;
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            width: fit-content;
+            margin-top: 12px;
+        }
+
+        .healthy .sector-status { background-color: #E8F5E9; color: var(--status-healthy); }
+        .stress .sector-status { background-color: #FFF3E0; color: var(--status-stress); }
+        .danger .sector-status { background-color: #FFEBEE; color: var(--status-danger); }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .metric-card {
+            background: #FAFAFA;
+            border: 1px solid #E0E0E0;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: var(--gray-muted);
+            font-weight: 600;
+        }
+
+        .metric-icon {
+            width: 24px;
+            height: 24px;
+            fill: var(--dark-green);
+            opacity: 0.6;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-text);
+        }
+
+        .ai-recommendation-box {
+            background: linear-gradient(180deg, #F9FBF9 0%, #F1F8F2 100%);
+            border: 1px solid var(--accent-green);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-top: 24px;
+        }
+
+        .ai-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--dark-green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ai-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #34495E;
+            font-weight: 500;
+        }
+
+        .eco-banner {
+            grid-column: 1 / -1;
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(46, 125, 50, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .eco-item {
+            text-align: center;
+            padding: 0 20px;
+            position: relative;
+            flex: 1;
+        }
+
+        .eco-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 20%;
+            width: 1px;
+            height: 60%;
+            background-color: #E0E0E0;
+        }
+
+        .eco-num {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--dark-green);
+        }
+
+        .eco-desc {
+            font-size: 13px;
+            color: var(--gray-muted);
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid #F0F0F0;
+            color: var(--gray-muted);
+            font-weight: 600;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .legend-color { width: 10px; height: 10px; border-radius: 50%; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <div class="brand">PhytoPredict KZ</div>
+            <div class="slogan">Умное сельское хозяйство для устойчивого будущего</div>
+        </div>
+        <nav class="nav-links">
+            <a href="#" class="active">Мониторинг полей</a>
+            <a href="#">Аналитика данных</a>
+            <a href="#">Личный кабинет</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="panel">
+            <div class="panel-title">Карта хозяйства</div>
+            <div class="map-grid">
+                <div class="map-sector healthy active" onclick="selectSector(this, 'A', 'Норма', '24.5°C', '65%', 'Низкий', 'Биомасса стабильна. Коррекция параметров не требуется.')">
+                    <span class="sector-id">Сектор А</span>
+                    <span class="sector-status">Норма</span>
+                </div>
+                <div class="map-sector danger" onclick="selectSector(this, 'B', 'Критическая засуха', '28.2°C', '18%', 'Высокий', 'Обнаружен дефицит влаги в прикорневой зоне. Рекомендуется немедленный запуск системы автополива.')">
+                    <span class="sector-id">Сектор B</span>
+                    <span class="sector-status">Засуха</span>
+                </div>
+                <div class="map-sector stress" onclick="selectSector(this, 'C', 'Температурный стресс', '29.5°C', '72%', 'Средний', 'Высокие показатели температуры и влажности воздуха. Повышен риск патогенов на 85%. Рекомендуется вентиляция.')">
+                    <span class="sector-id">Сектор C</span>
+                    <span class="sector-status">Стресс</span>
+                </div>
+                <div class="map-sector healthy" onclick="selectSector(this, 'D', 'Норма', '23.8°C', '61%', 'Низкий', 'Показатели соответствуют технологической карте культуры.')">
+                    <span class="sector-id">Сектор D</span>
+                    <span class="sector-status">Норма</span>
+                </div>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item"><div class="legend-color" style="background-color: var(--status-healthy);"></div> Здоровые растения</div>
+                <div class="legend-item"><div class="legend-color" style="background-color: var(--status-stress);"></div> Признаки стресса</div>
+                <div class="legend-item"><div class="legend-color" style="background-color: var(--status-danger);"></div> Высокий риск заболевания</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">Мониторинг параметров <span id="selected-title">Сектор А</span></div>
+            
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Температура воздуха</span>
+                        <svg class="metric-icon" viewBox="0 0 24 24"><path d="M15 13V5c0-1.66-1.34-3-3-3S9 3.34 9 5v8c-1.21.91-2 2.37-2 4 0 2.76 2.24 5 5 5s5-2.24 5-5c0-1.63-.79-3.09-2-4zm-3-9c.55 0 1 .45 1 1v3h-2V5c0-.55.45-1 1-1z"/></svg>
+                    </div>
+                    <div class="metric-value" id="val-temp">24.5°C</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Влажность почвы</span>
+                        <svg class="metric-icon" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    </div>
+                    <div class="metric-value" id="val-moisture">65%</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Риск заболеваний</span>
+                        <svg class="metric-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    </div>
+                    <div class="metric-value" id="val-risk">Низкий</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-label">Анализ биомассы</span>
+                        <svg class="metric-icon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.4c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l1.9-1.9C9.22 19.58 10.57 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/></svg>
+                    </div>
+                    <div class="metric-value" id="val-status" style="font-size: 20px;">Норма</div>
+                </div>
+            </div>
+
+            <div class="ai-recommendation-box">
+                <div class="ai-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-1.3l-.85-.6A4.997 4.997 0 0 1 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/></svg>
+                    Рекомендация ядра ИИ
+                </div>
+                <div class="ai-text" id="val-rec">
+                    Биомасса стабильна. Коррекция параметров не требуется.
+                </div>
+            </div>
+        </div>
+
+        <div class="eco-banner">
+            <div class="eco-item">
+                <div class="eco-num">18%</div>
+                <div class="eco-desc">Оптимизация водных ресурсов</div>
+            </div>
+            <div class="eco-item">
+                <div class="eco-num">25%</div>
+                <div class="eco-desc">Снижение пестицидной нагрузки</div>
+            </div>
+            <div class="eco-item">
+                <div class="eco-num">12 т</div>
+                <div class="eco-desc">Защищенный объем агрокультур</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function selectSector(element, name, status, temp, moisture, risk, rec) {
+            document.getElementById('selected-title').innerText = 'Сектор ' + name;
+            document.getElementById('val-temp').innerText = temp;
+            document.getElementById('val-moisture').innerText = moisture;
+            document.getElementById('val-risk').innerText = risk;
+            document.getElementById('val-status').innerText = status;
+            document.getElementById('val-rec').innerText = rec;
+
+            const sectors = document.querySelectorAll('.map-sector');
+            sectors.forEach(s => s.classList.remove('active'));
+            
+            if (element) {
+                element.classList.add('active');
+            }
+        }
+
+        function updateLiveTelemetry() {
+            fetch('http://localhost:5000/api/live')
+                .then(response => {
+                    if (!response.ok) throw new Error('Ошибка ответа сервера');
+                    return response.json();
+                })
+                .then(data => {
+                    const currentTitle = document.getElementById('selected-title').innerText;
+                    if (currentTitle === 'Сектор B' || currentTitle === 'Сектор B (Онлайн)') {
+                        document.getElementById('selected-title').innerText = 'Сектор B (Онлайн)';
+                        document.getElementById('val-temp').innerText = data.temp;
+                        document.getElementById('val-moisture').innerText = data.soil;
+                        document.getElementById('val-risk').innerText = data.risk;
+                        document.getElementById('val-status').innerText = data.status;
+                        document.getElementById('val-rec').innerText = data.recommendation;
+                    }
+                    
+                    const sectorB = document.querySelectorAll('.map-sector')[1]; 
+                    if (sectorB) {
+                        sectorB.className = 'map-sector';
+                        
+                        if (data.status === 'Норма') {
+                            sectorB.classList.add('healthy');
+                            sectorB.querySelector('.sector-status').innerText = 'Норма';
+                        } else if (data.status === 'Стресс') {
+                            sectorB.classList.add('stress');
+                            sectorB.querySelector('.sector-status').innerText = 'Стресс';
+                        } else {
+                            sectorB.classList.add('danger');
+                            sectorB.querySelector('.sector-status').innerText = 'Засуха';
+                        }
+                    }
+                })
+                .catch(err => {});
+        }
+
+        setInterval(updateLiveTelemetry, 2000);
+    </script>
+</body>
+</html>
